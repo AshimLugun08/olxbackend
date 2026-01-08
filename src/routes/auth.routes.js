@@ -71,7 +71,7 @@ router.post('/login',
 
       const { email, password } = req.body;
 
-      // 1️⃣ Auth login
+      // 1️⃣ Login using Supabase Auth
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -81,7 +81,7 @@ router.post('/login',
         return res.status(401).json({ error: error.message });
       }
 
-      // 2️⃣ Fetch profile from profiles table
+      // 2️⃣ Fetch profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('full_name, phone, location')
@@ -92,8 +92,8 @@ router.post('/login',
         return res.status(400).json({ error: profileError.message });
       }
 
-      // 3️⃣ Return combined response
-      res.json({
+      // 3️⃣ MERGED single user object
+      res.status(200).json({
         message: 'Login successful',
         user: {
           id: data.user.id,
@@ -102,7 +102,12 @@ router.post('/login',
           phone: profile.phone,
           location: profile.location,
         },
-        session: data.session,
+        session: {
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+          expires_in: data.session.expires_in,
+          expires_at: data.session.expires_at,
+        },
       });
 
     } catch (error) {
@@ -111,6 +116,7 @@ router.post('/login',
     }
   }
 );
+
 
 
 router.post('/logout', authenticateUser, async (req, res) => {
