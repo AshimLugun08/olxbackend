@@ -71,6 +71,7 @@ router.post('/login',
 
       const { email, password } = req.body;
 
+      // 1️⃣ Auth login
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -80,17 +81,37 @@ router.post('/login',
         return res.status(401).json({ error: error.message });
       }
 
+      // 2️⃣ Fetch profile from profiles table
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('full_name, phone, location')
+        .eq('id', data.user.id)
+        .single();
+
+      if (profileError) {
+        return res.status(400).json({ error: profileError.message });
+      }
+
+      // 3️⃣ Return combined response
       res.json({
         message: 'Login successful',
-        user: data.user,
+        user: {
+          id: data.user.id,
+          email: data.user.email,
+          full_name: profile.full_name,
+          phone: profile.phone,
+          location: profile.location,
+        },
         session: data.session,
       });
+
     } catch (error) {
       console.error('Login error:', error);
       res.status(500).json({ error: 'Login failed' });
     }
   }
 );
+
 
 router.post('/logout', authenticateUser, async (req, res) => {
   try {
