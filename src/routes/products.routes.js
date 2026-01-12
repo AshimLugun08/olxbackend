@@ -84,7 +84,7 @@ router.post('/',
 );
 
 router.get('/',
-  optionalAuth,
+  authenticateUser,
   [
     query('category_id').optional().isUUID(),
     query('status').optional().isIn(['active', 'sold', 'draft', 'archived']),
